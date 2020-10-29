@@ -17,6 +17,12 @@ print("     " + sounds_dir)
 print("     " + images_dir)
 print("     " + sprites_dir + "\n")
 
+# Colour Pallette:
+# Pink - #fa448c
+# Yellow - #fec859
+# Aqua/Green - #43b5a0
+# Dark Purple - #491d88
+# Light Black/Red - #331a38
 
 def load_image(name, colorkey=None):
     fullname = os.path.join(images_dir, name)
@@ -47,8 +53,7 @@ def load_sound(name):
         print("Cannot load sound: %s" % fullname)
         raise SystemExit(str(geterror()))
     return sound
-
-
+    
 class Player(pg.sprite.Sprite):
 
     def __init__(self):
@@ -58,7 +63,6 @@ class Player(pg.sprite.Sprite):
         self.area = screen.get_rect()
         self.rect.topleft = 10, 10
         self.move = 9
-        self.dizzy = 0
 
     def move(self):
         # Move according to mouse position
