@@ -80,15 +80,23 @@ def main():
     screen = pg.display.set_mode((1280, 720))
     pg.display.set_caption("Concentrate")
     pg.mouse.set_visible(1)
-
-    # Create The Backgound
-    background = pg.Surface(screen.get_size())
-    background = background.convert()
-    background.fill((250, 250, 250))
-
     clock = pg.time.Clock()
-    mainMenu(background, screen, clock)
 
+    # Create The Main Menu Surface
+    mainMenuSurface = pg.Surface(screen.get_size())
+    mainMenuSurface = mainMenuSurface.convert()
+    mainMenuSurface.fill((250, 250, 250))
+
+    # Create The Config Menu Surface
+    configMenuSurface = pg.Surface(screen.get_size())
+    configMenuSurface = configMenuSurface.convert()
+    configMenuSurface.fill((250, 250, 250))
+
+    # Call The Various Menus
+    mainMenu(mainMenuSurface, screen, clock)
+    configMenu(configMenuSurface, screen, clock)
+
+    print("GAME STATUS: Running")
     # Prepare Game Objects
     
     #button_sound = load_sound("button_sound.wav")
@@ -97,29 +105,30 @@ def main():
     #player = Player()
 
 
-def mainMenu(background, screen, clock):
+def mainMenu(mainMenuSurface, screen, clock):
 
-    # Title On Background
+    # Title Text
     font = pg.font.Font(None, 55)
     text = font.render("Concentrate", 1, (10, 10, 10))
-    textpos = text.get_rect(centerx=int(background.get_width() / 2), centery=int(background.get_height()/3))
-    background.blit(text, textpos)
+    textpos = text.get_rect(centerx=round(mainMenuSurface.get_width() / 2), centery=round(mainMenuSurface.get_height()/3))
+    mainMenuSurface.blit(text, textpos)
 
-    # Start Game On Background
+    # Start Game TExt
     font = pg.font.Font(None, 30)
     text = font.render("Start Game", 1, (10, 10, 10))
-    startpos = text.get_rect(centerx=int(background.get_width() / 2), centery=int(background.get_height()/2))
-    background.blit(text, startpos)
+    startpos = text.get_rect(centerx=round(mainMenuSurface.get_width() / 2), centery=round(mainMenuSurface.get_height()/2))
+    mainMenuSurface.blit(text, startpos)
 
-    # Instructions On Background
+    # Instructions Text
     text = font.render("Instructions", 1, (10, 10, 10))
-    instructionpos = text.get_rect(centerx=int(background.get_width() / 2), centery=int(background.get_height()/2) + 1.5*(startpos.bottomright[1]-startpos.topleft[1]))
-    background.blit(text, instructionpos)
+    instructionpos = text.get_rect(centerx=round(mainMenuSurface.get_width() / 2), centery=round(mainMenuSurface.get_height()/2) + round(1.5*(startpos.bottomright[1]-startpos.topleft[1])))
+    mainMenuSurface.blit(text, instructionpos)
 
-    # Display The Background
-    screen.blit(background, (0, 0))
+    # Display The Surface
+    screen.blit(mainMenuSurface, (0, 0))
     pg.display.flip()
 
+    # Loop For The Menu - Keeps Screen At 60FPS and Loops Until Otherwise Instructed
     menuGoing = True
     while menuGoing == True:
         clock.tick(60)
@@ -128,16 +137,51 @@ def mainMenu(background, screen, clock):
             mousePos = pg.mouse.get_pos()
             if event.type == pg.QUIT:
                 pg.quit()
+                exit(0)
             elif event.type == pg.MOUSEBUTTONDOWN:
                 if mousePos[0] >= startpos.topleft[0] and mousePos[0] <= startpos.bottomright[0] and mousePos[1] <= startpos.bottomright[1] and mousePos[1] >= startpos.topleft[1]:
                     menuGoing = False
                     print("Start Game")
                 elif mousePos[0] >= instructionpos.topleft[0] and mousePos[0] <= instructionpos.bottomright[0] and mousePos[1] <= instructionpos.bottomright[1] and mousePos[1] >= instructionpos.topleft[1]:
                     print("Instructions")
-        if event.type == pg.QUIT:
-            exit(0)
+                
 
+def configMenu(configMenuSurface, screen, clock):
+    # Title Text
+    font = pg.font.Font(None, 55)
+    text = font.render("Game Configuration", 1, (10, 10, 10))
+    textpos = text.get_rect(centerx=round(configMenuSurface.get_width() / 2), centery=round(configMenuSurface.get_height()/3))
+    configMenuSurface.blit(text, textpos)
 
+    # Start Game Text
+    font = pg.font.Font(None, 30)
+    text = font.render("Start Game", 1, (10, 10, 10))
+    startpos = text.get_rect(centerx=round(configMenuSurface.get_width() / 2), centery=round(configMenuSurface.get_height()/2))
+    configMenuSurface.blit(text, startpos)
+
+    # Instructions Text
+    text = font.render("Instructions", 1, (10, 10, 10))
+    instructionpos = text.get_rect(centerx=round(configMenuSurface.get_width() / 2), centery=round(configMenuSurface.get_height()/2) + round(1.5*(startpos.bottomright[1]-startpos.topleft[1])))
+    configMenuSurface.blit(text, instructionpos)
+
+    # Display The Surface
+    screen.blit(configMenuSurface, (0, 0))
+    pg.display.flip()
+
+    # Loop For The Config Menu - Does The Same As Main Menu Loop
+    menuGoing = True
+    while menuGoing == True:
+        clock.tick(60)
+        
+        for event in pg.event.get():
+            mousePos = pg.mouse.get_pos()
+            if event.type == pg.QUIT:
+                pg.quit()
+                exit(0)
+            elif event.type == pg.MOUSEBUTTONDOWN:
+                if mousePos[0] >= startpos.topleft[0] and mousePos[0] <= startpos.bottomright[0] and mousePos[1] <= startpos.bottomright[1] and mousePos[1] >= startpos.topleft[1]:
+                    menuGoing = False
+    
 def startupChecks():
     if not pg.font:
         print("WARNING: Fonts disabled.")
