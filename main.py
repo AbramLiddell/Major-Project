@@ -148,7 +148,15 @@ def mainMenu(mainMenuSurface, screen, clock):
                     print("CONTROL: Start Game")
                 elif mousePos[0] >= instructionpos.topleft[0] and mousePos[0] <= instructionpos.bottomright[0] and mousePos[1] <= instructionpos.bottomright[1] and mousePos[1] >= instructionpos.topleft[1]:
                     print("CONTROL: Instructions")
-                
+
+def blit_alpha(target, source, location, opacity):
+        x = location[0]
+        y = location[1]
+        temp = pg.Surface((source.get_width(), source.get_height())).convert()
+        temp.blit(target, (-x, -y))
+        temp.blit(source, (0, 0))
+        temp.set_alpha(opacity)        
+        target.blit(temp, location)     
 
 def configMenu(configMenuSurface, screen, clock):
     
@@ -158,11 +166,17 @@ def configMenu(configMenuSurface, screen, clock):
     configMenuSurface.blit(configBackgroundImage, configRect)
 
     # Title Text
-    font = pg.font.Font(None, 55)
-    text = font.render("Game Configuration", 1, (10, 10, 10))
-    textpos = text.get_rect(centerx=round(configMenuSurface.get_width() / 2), centery=round((configMenuSurface.get_height()/3) - 100))
-    configMenuSurface.blit(text, textpos)
+    #configTitleImage = load_image("config-menu-text.png")
+    #configRect = configBackgroundImage.get_rect()
+    #blit_alpha(configMenuSurface, configTitleImage, configRect, 200)
 
+    # Title Text
+    font = pg.font.Font(None, 40)
+    text = font.render("Configuration", 1, (255, 255, 255))
+    startpos = text.get_rect(centerx=round(configMenuSurface.get_width() / 2), centery=round(configMenuSurface.get_height()/3 - 100))
+    
+
+    configMenuSurface.blit(text, startpos)
     # Start Game Text
     font = pg.font.Font(None, 40)
     text = font.render("Start", 1, (10, 10, 10))
