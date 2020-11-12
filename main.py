@@ -78,6 +78,16 @@ class Player(pg.sprite.Sprite):
                 self.image = pg.transform.flip(self.image, 1, 0)
             self.rect = newpos
 
+# Loads images with transparency
+def blit_alpha(target, source, location, opacity):
+        x = location[0]
+        y = location[1]
+        temp = pg.Surface((source.get_width(), source.get_height())).convert()
+        temp.blit(target, (-x, -y))
+        temp.blit(source, (0, 0))
+        temp.set_alpha(opacity)        
+        target.blit(temp, location)
+
 # Main Sub Which Controls All Other Game Functions
 def main():
     # Initialize Everything Required For Game Operation
@@ -96,8 +106,18 @@ def main():
     configMenuSurface = configMenuSurface.convert()
     configMenuSurface.fill((250, 250, 250))
 
+    # Create The Instruction Menu Surface
+    instructionMenuSurface = pg.Surface(screen.get_size())
+    instructionMenuSurface = instructionMenuSurface.convert()
+    instructionMenuSurface.fill((250, 250, 250))
+
     # Call The Various Menus
-    mainMenu(mainMenuSurface, screen, clock)
+    instructionsTripped = False
+    while True:
+        mainMenu(mainMenuSurface, screen, clock, instructionMenuSurface, instructionsTripped)
+        if instructionsTripped == True:
+            break
+
     configMenu(configMenuSurface, screen, clock)
 
     print("GAME STATUS: Running")
@@ -108,8 +128,7 @@ def main():
     #death_sound = load_sound("death_sound.wav")
     #player = Player()
 
-
-def mainMenu(mainMenuSurface, screen, clock):
+def mainMenu(mainMenuSurface, screen, clock, instructionMenuSurface, instructionsTripped):
 
     # Title Text
     font = pg.font.Font(None, 55)
@@ -117,7 +136,7 @@ def mainMenu(mainMenuSurface, screen, clock):
     textpos = text.get_rect(centerx=round(mainMenuSurface.get_width() / 2), centery=round(mainMenuSurface.get_height()/3))
     mainMenuSurface.blit(text, textpos)
 
-    # Start Game TExt
+    # Start Game Text
     font = pg.font.Font(None, 30)
     text = font.render("Start Game", 1, (10, 10, 10))
     startpos = text.get_rect(centerx=round(mainMenuSurface.get_width() / 2), centery=round(mainMenuSurface.get_height()/2))
@@ -148,16 +167,12 @@ def mainMenu(mainMenuSurface, screen, clock):
                     print("CONTROL: Start Game")
                 elif mousePos[0] >= instructionpos.topleft[0] and mousePos[0] <= instructionpos.bottomright[0] and mousePos[1] <= instructionpos.bottomright[1] and mousePos[1] >= instructionpos.topleft[1]:
                     print("CONTROL: Instructions")
+                    instructionMenu(instructionMenuSurface, screen, clock)
+                    instructionsTripped = True
+                    menuGoing = False
 
-def blit_alpha(target, source, location, opacity):
-        x = location[0]
-        y = location[1]
-        temp = pg.Surface((source.get_width(), source.get_height())).convert()
-        temp.blit(target, (-x, -y))
-        temp.blit(source, (0, 0))
-        temp.set_alpha(opacity)        
-        target.blit(temp, location)     
-
+                    #have sub go back to the main loop and check if instructions has been hit. If yes , than main menu again.
+    
 def configMenu(configMenuSurface, screen, clock):
     
     # Background
@@ -166,17 +181,17 @@ def configMenu(configMenuSurface, screen, clock):
     configMenuSurface.blit(configBackgroundImage, configRect)
 
     # Title Text
-    #configTitleImage = load_image("config-menu-text.png")
-    #configRect = configBackgroundImage.get_rect()
-    #blit_alpha(configMenuSurface, configTitleImage, configRect, 200)
+    configTitleImage = load_image("config-menu-text.png")
+    configRect = configBackgroundImage.get_rect()
+    blit_alpha(configMenuSurface, configTitleImage, configRect, 10)
 
     # Title Text
-    font = pg.font.Font(None, 40)
-    text = font.render("Configuration", 1, (255, 255, 255))
-    startpos = text.get_rect(centerx=round(configMenuSurface.get_width() / 2), centery=round(configMenuSurface.get_height()/3 - 100))
+    #font = pg.font.Font(None, 40)
+    #text = font.render("Configuration", 1, (255, 255, 255))
+    #startpos = text.get_rect(centerx=round(configMenuSurface.get_width() / 2), centery=round(configMenuSurface.get_height()/3 - 100))
     
 
-    configMenuSurface.blit(text, startpos)
+    #configMenuSurface.blit(text, startpos)
     # Start Game Text
     font = pg.font.Font(None, 40)
     text = font.render("Start", 1, (10, 10, 10))
@@ -208,6 +223,40 @@ def configMenu(configMenuSurface, screen, clock):
                     menuGoing = False
                     print("CONTROL: Config Start")
     
+def instructionMenu(instructionMenuSurface, screen, clock):
+    
+    # Title Text
+    font = pg.font.Font(None, 40)
+    TitleText = font.render("Instructions", 1, (10, 10, 10))
+    startpos = TitleText.get_rect(centerx=round(instructionMenuSurface.get_width() / 2), centery=round(instructionMenuSurface.get_height()/3 - 100))
+
+    # Back Button Text
+    font = pg.font.Font(None, 30)
+    BackText = font.render("Back", 1, (10, 10, 10))
+    backpos = BackText.get_rect(centerx=round(instructionMenuSurface.get_width() / 6 - 100), centery=round(instructionMenuSurface.get_height()/6 - 50))
+    
+    # Blit Text to Screen
+    instructionMenuSurface.blit(TitleText, startpos)
+    instructionMenuSurface.blit(BackText, backpos)
+
+    # Display The Surface
+    screen.blit(instructionMenuSurface, (0, 0))
+    pg.display.flip()
+
+    # Loop For The Config Menu - Does The Same As Main Menu Loop
+    menuGoing = True
+    while menuGoing == True:
+        clock.tick(60)
+        
+        for event in pg.event.get():
+            mousePos = pg.mouse.get_pos()
+            if event.type == pg.QUIT:
+                pg.quit()
+                exit(0)
+            elif event.type == pg.MOUSEBUTTONDOWN:
+                if mousePos[0] >= backpos.topleft[0] and mousePos[0] <= backpos.bottomright[0] and mousePos[1] <= backpos.bottomright[1] and mousePos[1] >= backpos.topleft[1]:
+                    menuGoing = False
+                    print("CONTROL: Back")
 def startupChecks():
     if not pg.font:
         print("WARNING: Fonts disabled.")
