@@ -93,8 +93,12 @@ class Player(pg.sprite.Sprite):
         self.area = screen.get_rect()
         self.rect.topleft = 10, 10
         self.move = 9
-    def update(self):
-        print("Updated.")
+    def update(self, move):
+        self.rect.x += move[0]
+        self.rect.y += move[1]
+
+
+        
     def move(self):
         # Move according to mouse position
         newpos = self.rect.move((self.move, 0))
@@ -184,31 +188,45 @@ def main():
     allSprites.draw(screen)
     pg.display.flip()
 
+
+
+    allSprites.add(player)
+
+
+    playerMoveX = 0
+    playerMoveY = 0
     while True:
         for event in pg.event.get():
             if event.type == QUIT:
                 return
             elif event.type == KEYDOWN:
                 if event.key == K_w:
-                    player.moveup()
+                    playerMoveY -= 2
                 if event.key == K_s:
-                    player.movedown()
+                    playerMoveY += 2
                 if event.key == K_a:
-                    player.moveleft()
+                    playerMoveX -= 2
                 if event.key == K_d:
-                    player.moveright()
+                    playerMoveX += 2
             elif event.type == KEYUP:
-                if event.key == K_a or event.key == K_z:
-                    player.movepos = [0,0]
-                    player.state = "still"
+                if event.key == K_a:
+                    playerMoveX += 2
+                elif event.key == K_d:
+                    playerMoveX -= 2
+                elif event.key == K_w:
+                    playerMoveY += 2
+                elif event.key == K_s:
+                    playerMoveY -= 2
 
+        player.update((playerMoveX, playerMoveY))    
+    
         bordernum += 1
         border.append(Border())
-        allSprites.update()
+#        allSprites.update()
         screen.blit(gameSurface, (0, 0))
         allSprites.draw(screen)
         pg.display.flip()
-        pg.time.Clock().tick(1)
+        pg.time.Clock().tick(60)
     
     
     
