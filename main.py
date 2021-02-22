@@ -4,6 +4,7 @@ import sys
 import time
 from pygame.locals import *
 from pygame.compat import geterror
+import random
 
 main_dir = os.path.split(os.path.abspath(__file__))[0]
 assets_dir = os.path.join(main_dir, "Assets")
@@ -21,9 +22,12 @@ print("     " + sprites_dir + "\n")
 
 global gameStarted
 global bordernum
+global borderSpeed
 bordernum = 0
+borderSpeed = 1
 gameStarted = False
-border = []
+borders = []
+oldY = 0
 
 # Colour Pallette:
 # Pink - #fa448c
@@ -87,33 +91,44 @@ class Player(pg.sprite.Sprite):
     def __init__(self):
         pg.sprite.Sprite.__init__(self)  # call Sprite intializer
         print("Loading Sprite")
-        self.image = load_sprite("square.png", -1)
+        self.image = pg.transform.scale(load_sprite("square.png", -1), (50, 50))
         self.rect = self.image.get_rect()
         screen = pg.display.get_surface()
         self.area = screen.get_rect()
         self.rect.topleft = 10, 10
-        self.move = 9
     def update(self, move):
         self.rect.x += move[0]
         self.rect.y += move[1]
 
-
-        
-    def move(self):
-        # Move according to mouse position
-        newpos = self.rect.move((self.move, 0))
-        if not self.area.contains(newpos):
-            if self.rect.left < self.area.left or self.rect.right > self.area.right:
-                self.move = -self.move
-                newpos = self.rect.move((self.move, 0))
-                self.image = pg.transform.flip(self.image, 1, 0)
-            self.rect = newpos
-class Border():
+class Border(pg.sprite.Sprite):
     global bordernum
+    global borderSpeed
+    global oldY
+
+    borderSpeed = 1
     def __init__(self):
-        self.x = generateX()
-        self.y = generateY()
-        self.width = generateWidth()
+        pg.sprite.Sprite.__init__(self)
+        self.image = pg.transform.scale(load_sprite("square.png", -1), (10, 50))
+        self.rect = self.image.get_rect()
+        self.y = 720
+        self.x = 1200
+
+    def update(self):
+        oldY = self.y
+
+        self.width = self.generateWidth()
+        self.x =- borderSpeed
+        self.y =+ self.generateY()
+        
+    def generateY(self):
+        if self.y + oldY >= 720:
+            self.y = 720-oldY-self.width
+        else:
+            self.y = oldY + random.randint(-1*oldY, oldY)
+        return self.y
+        
+    def generateWidth(self):
+        return (720/random.randint(70, 140))
 
 # Loads Images With Transparency
 def blit_alpha(target, source, location, opacity):
@@ -130,6 +145,10 @@ def main():
 
     global gameStarted
     global bordernum
+    borders = pg.sprite.Group()
+
+    numBorders = 0
+    bordernum = 0
 
     # Initialize Everything Required For Game Operation
     screen = pg.display.set_mode((1280, 720))
@@ -174,6 +193,9 @@ def main():
     #death_sound = load_sound("death_sound.wav")
     
     player = Player()
+    for i in range(10):
+        borders.add(Border())
+    print(borders)
 
     currentTimer = getPerfTime()
     gameTime = currentTimer - startTime
@@ -182,79 +204,59 @@ def main():
     #have game countdown here
     #while (gameTime <= 3):
     playerPosition = 600
-    border.append(Border())
     allSprites = pg.sprite.RenderPlain((player))
+    borderGroup = pg.sprite.Group()
     screen.blit(gameSurface, (0, 0))
     allSprites.draw(screen)
     pg.display.flip()
 
-
-
+    i=0
     allSprites.add(player)
 
+    for i in range(10):
+        border = Border()
+        borderGroup.add(border)
 
     playerMoveX = 0
     playerMoveY = 0
+    speed = 3
+    fps_count = 0
     while True:
+        fps_count += 1
         for event in pg.event.get():
             if event.type == QUIT:
                 return
             elif event.type == KEYDOWN:
                 if event.key == K_w:
-                    playerMoveY -= 2
+                    playerMoveY -= speed
                 if event.key == K_s:
-                    playerMoveY += 2
+                    playerMoveY += speed
                 if event.key == K_a:
-                    playerMoveX -= 2
+                    playerMoveX -= speed
                 if event.key == K_d:
-                    playerMoveX += 2
+                    playerMoveX += speed
             elif event.type == KEYUP:
                 if event.key == K_a:
-                    playerMoveX += 2
+                    playerMoveX += speed
                 elif event.key == K_d:
-                    playerMoveX -= 2
+                    playerMoveX -= speed
                 elif event.key == K_w:
-                    playerMoveY += 2
-                elif event.key == K_s:
-                    playerMoveY -= 2
+                    playerMoveY += speed
+                elif event.key == K_s:\
+                    playerMoveY -= speed
 
-        player.update((playerMoveX, playerMoveY))    
-    
-        bordernum += 1
-        border.append(Border())
-#        allSprites.update()
+        player.update((playerMoveX, playerMoveY))   
+        borderGroup.update()
+
+
         screen.blit(gameSurface, (0, 0))
         allSprites.draw(screen)
         pg.display.flip()
-        pg.time.Clock().tick(60)
+        pg.time.Clock().tick(220)
     
-    
-    
-    #print(border[0].x)
-    #print(border[0].y)
-    #print(border[0].width)
-    #print(border[bordernum].x)
-    #print(border[bordernum].y)
-    #print(border[bordernum].width)
 
 def getPerfTime():
     return time.perf_counter()
-
-def generateX():
-    global bordernum
-    if bordernum == 0:
-        #return borderwidth
-        return 1000
-    else:
-        return border[bordernum-1].x - 100
-
-def generateY():
-    # randomboi
-    return 100
-
-def generateWidth():
-    # randomboi 
-    return 100
 
 # Main Menu Function
 def mainMenu(mainMenuSurface, screen, clock, instructionMenuSurface):
