@@ -21,13 +21,11 @@ print("     " + images_dir)
 print("     " + sprites_dir + "\n")
 
 global gameStarted
-global bordernum
 global borderSpeed
-bordernum = 0
 borderSpeed = 1
 gameStarted = False
-borders = []
 oldY = 0
+
 
 # Colour Pallette:
 # Pink - #fa448c
@@ -101,30 +99,57 @@ class Player(pg.sprite.Sprite):
         self.rect.y += move[1]
 
 class Border(pg.sprite.Sprite):
-    global bordernum
     global borderSpeed
+    #global borderRequired
     global oldY
 
     borderSpeed = 1
     def __init__(self):
         pg.sprite.Sprite.__init__(self)
-        self.image = pg.transform.scale(load_sprite("square.png", -1), (10, 50))
+        self.image = pg.transform.scale(load_sprite("square.png", -1), (50, 1280))
         self.rect = self.image.get_rect()
-        self.y = 720
-        self.x = 1200
+        self.rect.topleft = 1280, -720
+        self.rect.x = 1280
+        self.rect.y = 0
+        self.y = 340
+        self.width = 40
 
-    def update(self):
+        print(self.rect)
+
+    def update(self, borderRequired):
+
+        print(borderRequired)
+        # Note: This comment is resource heavy.
+        #print("STATUS: Borders Updating.")
+
         oldY = self.y
 
         self.width = self.generateWidth()
-        self.x =- borderSpeed
+        self.rect.x = self.rect.x - borderSpeed
         self.y =+ self.generateY()
+        self.borderRequired = borderRequired
+
+        #print(self.rect.x)
+        #print(borderRequired)
+
+        if self.borderRequired == False:
+            if self.rect.x < 1200:
+                print("True")
+                self.borderRequired = True
+            else:
+                self.borderRequired = False
+        elif self.borderRequired == True:
+            print("Made False")
+            self.borderRequired = False
+
         
     def generateY(self):
+
         if self.y + oldY >= 720:
-            self.y = 720-oldY-self.width
+            self.y = int(720-oldY-self.width)
         else:
-            self.y = oldY + random.randint(-1*oldY, oldY)
+            self.y = int(oldY + random.randint(-1*oldY, oldY))
+
         return self.y
         
     def generateWidth(self):
@@ -144,11 +169,9 @@ def blit_alpha(target, source, location, opacity):
 def main():
 
     global gameStarted
-    global bordernum
-    borders = pg.sprite.Group()
 
     numBorders = 0
-    bordernum = 0
+    borderRequired = True
 
     # Initialize Everything Required For Game Operation
     screen = pg.display.set_mode((1280, 720))
@@ -193,9 +216,7 @@ def main():
     #death_sound = load_sound("death_sound.wav")
     
     player = Player()
-    for i in range(10):
-        borders.add(Border())
-    print(borders)
+    border = Border()
 
     currentTimer = getPerfTime()
     gameTime = currentTimer - startTime
@@ -206,16 +227,13 @@ def main():
     playerPosition = 600
     allSprites = pg.sprite.RenderPlain((player))
     borderGroup = pg.sprite.Group()
+    borderGroup.add(border)
     screen.blit(gameSurface, (0, 0))
     allSprites.draw(screen)
     pg.display.flip()
 
     i=0
     allSprites.add(player)
-
-    for i in range(10):
-        border = Border()
-        borderGroup.add(border)
 
     playerMoveX = 0
     playerMoveY = 0
@@ -242,14 +260,19 @@ def main():
                     playerMoveX -= speed
                 elif event.key == K_w:
                     playerMoveY += speed
-                elif event.key == K_s:\
+                elif event.key == K_s:
                     playerMoveY -= speed
 
         player.update((playerMoveX, playerMoveY))   
-        borderGroup.update()
+        borderRequired = classmethod(borderGroup.update((borderRequired)))
 
+        if borderRequired == True:
+            border = Border()
+            borderGroup.add(border)
+            print("STATUS: Border Added.")
 
         screen.blit(gameSurface, (0, 0))
+        borderGroup.draw(screen)
         allSprites.draw(screen)
         pg.display.flip()
         pg.time.Clock().tick(220)
