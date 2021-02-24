@@ -103,22 +103,22 @@ class Border(pg.sprite.Sprite):
     #global borderRequired
     global oldY
 
-    borderSpeed = 1
+    borderSpeed = 2
     def __init__(self):
         pg.sprite.Sprite.__init__(self)
-        self.image = pg.transform.scale(load_sprite("square.png", -1), (50, 1280))
+        self.image = load_sprite("border.png", -1)
         self.rect = self.image.get_rect()
         self.rect.topleft = 1280, -720
         self.rect.x = 1280
         self.rect.y = 0
         self.y = 340
         self.width = 40
+        self.borderRequired = False
 
         print(self.rect)
 
-    def update(self, borderRequired):
+    def update(self):
 
-        print(borderRequired)
         # Note: This comment is resource heavy.
         #print("STATUS: Borders Updating.")
 
@@ -127,19 +127,16 @@ class Border(pg.sprite.Sprite):
         self.width = self.generateWidth()
         self.rect.x = self.rect.x - borderSpeed
         self.y =+ self.generateY()
-        self.borderRequired = borderRequired
 
         #print(self.rect.x)
         #print(borderRequired)
 
         if self.borderRequired == False:
-            if self.rect.x < 1200:
-                print("True")
+            if self.rect.x < 1000:
                 self.borderRequired = True
             else:
                 self.borderRequired = False
         elif self.borderRequired == True:
-            print("Made False")
             self.borderRequired = False
 
         
@@ -149,7 +146,6 @@ class Border(pg.sprite.Sprite):
             self.y = int(720-oldY-self.width)
         else:
             self.y = int(oldY + random.randint(-1*oldY, oldY))
-
         return self.y
         
     def generateWidth(self):
@@ -169,8 +165,6 @@ def blit_alpha(target, source, location, opacity):
 def main():
 
     global gameStarted
-
-    numBorders = 0
     borderRequired = True
 
     # Initialize Everything Required For Game Operation
@@ -264,9 +258,9 @@ def main():
                     playerMoveY -= speed
 
         player.update((playerMoveX, playerMoveY))   
-        borderRequired = classmethod(borderGroup.update((borderRequired)))
+        borderGroup.update()
 
-        if borderRequired == True:
+        if border.borderRequired == True:
             border = Border()
             borderGroup.add(border)
             print("STATUS: Border Added.")
