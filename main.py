@@ -56,6 +56,7 @@ def load_sprite(name, colorkey=None):
     print("Sprite Name: " + fullname)
     try:
         image = pg.image.load(fullname)
+        print(fullname)
         print("STATUS: Image loaded.")
     except pg.error:
         print("ERROR: Cannot load image:", fullname)
@@ -106,7 +107,8 @@ class Border(pg.sprite.Sprite):
     borderSpeed = 2
     def __init__(self):
         pg.sprite.Sprite.__init__(self)
-        self.image = load_sprite("border.png", -1)
+        self.image = load_sprite("border.png", None
+        )
         self.rect = self.image.get_rect()
         self.rect.topleft = 1280, -720
         self.rect.x = 1280
@@ -216,8 +218,6 @@ def main():
     gameTime = currentTimer - startTime
 
     print("Game Time: " + str(gameTime))
-    #have game countdown here
-    #while (gameTime <= 3):
     playerPosition = 600
     allSprites = pg.sprite.RenderPlain((player))
     borderGroup = pg.sprite.Group()
@@ -264,6 +264,10 @@ def main():
             border = Border()
             borderGroup.add(border)
             print("STATUS: Border Added.")
+
+        for border in borderGroup:
+            if border.rect.x < -50:
+                borderGroup.remove(border)
 
         screen.blit(gameSurface, (0, 0))
         borderGroup.draw(screen)
@@ -401,13 +405,6 @@ def instructionMenu(instructionMenuSurface, screen, clock):
 def drawGame(gameSurface, screen, clock):
     # Fill white to stop bolding - clear screen
     gameSurface.fill((250, 250, 250))
-
-    # Background
-    #gameBackgroundImage = load_image("Config-Menu.png")
-    #gameRect = gameBackgroundImage.get_rect()
-    #blit_alpha(gameSurface, gameBackgroundImage, gameRect, 255)
-
-    
     screen.blit(gameSurface, (0, 0))
     pg.display.flip()
 # Startup Function to Ensure Modules Are Loaded
