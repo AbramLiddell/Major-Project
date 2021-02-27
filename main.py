@@ -99,6 +99,9 @@ class Player(pg.sprite.Sprite):
         self.rect.x += move[0]
         self.rect.y += move[1]
 
+        # if self.rect.y < 660 or self.rect.y > 780:
+        #     print("Border Hit.")
+
 class Border(pg.sprite.Sprite):
     global borderSpeed
     #global borderRequired
@@ -107,8 +110,7 @@ class Border(pg.sprite.Sprite):
     borderSpeed = 2
     def __init__(self):
         pg.sprite.Sprite.__init__(self)
-        self.image = load_sprite("border.png", None
-        )
+        self.image = load_sprite("border.png", None)
         self.rect = self.image.get_rect()
         self.rect.topleft = 1280, -720
         self.rect.x = 1280
@@ -143,25 +145,41 @@ class Border(pg.sprite.Sprite):
 
         
     def generateY(self):
-
-        if self.y + oldY >= 720:
-            self.y = int(720-oldY-self.width)
-        else:
-            self.y = int(oldY + random.randint(-1*oldY, oldY))
-        return self.y
+        
+        # y = oldY
+        # print(y)
+        # print(oldY)
+        # if y + oldY >= 720:
+        #     y = int(720-oldY-self.width)
+        # else:
+        #     y = int(oldY + random.randint(-1*oldY, oldY))
+        #     print(y)
+        return 700
         
     def generateWidth(self):
-        return (720/random.randint(70, 140))
+        # return (720/random.randint(70, 140))
+        return 40
+    # def drawLine(self, surface):
+    #     pg.draw.line(surface, (0, 0, 0), (0, 660), (1280, 660))
+    #     pg.draw.line(surface, (0, 0, 0), (0, 780), (1280, 780))
+class Sounds():
+    def __init__(self):
+        self.loadSounds()
+
+    def loadSounds(self):
+        self.deathSound = load_sound("death_sound.wav")
+        self.timerSound = load_sound("timer_sound.wav")
+        self.startSound = load_sound("start_sound.wav")
 
 # Loads Images With Transparency
 def blit_alpha(target, source, location, opacity):
-        x = location[0]
-        y = location[1]
-        temp = pg.Surface((source.get_width(), source.get_height())).convert()
-        temp.blit(target, (-x, -y))
-        temp.blit(source, (0, 0))
-        temp.set_alpha(opacity)        
-        target.blit(temp, location)
+    x = location[0]
+    y = location[1]
+    temp = pg.Surface((source.get_width(), source.get_height())).convert()
+    temp.blit(target, (-x, -y))
+    temp.blit(source, (0, 0))
+    temp.set_alpha(opacity)        
+    target.blit(temp, location)
 
 # Main Sub Which Controls All Other Game Functions
 def main():
@@ -198,43 +216,35 @@ def main():
     # Call The Various Menus
     while not gameStarted:
         mainMenu(mainMenuSurface, screen, clock, instructionMenuSurface)
-
     configMenu(configMenuSurface, screen, clock)
-    startTime = getPerfTime()
 
     print("\nGAME STATUS: Running\n")
-    print("Time Started At: " + str(startTime))
     drawGame(gameSurface, screen, clock)
     
-    # Prepare Game Objects
-    #button_sound = load_sound("button_sound.wav")
-    #barrier_sound = load_sound("barrier_sound.wav")
-    #death_sound = load_sound("death_sound.wav")
     
+    #sounds = Sounds()
     player = Player()
     border = Border()
 
-    currentTimer = getPerfTime()
-    gameTime = currentTimer - startTime
-
-    print("Game Time: " + str(gameTime))
-    playerPosition = 600
     allSprites = pg.sprite.RenderPlain((player))
     borderGroup = pg.sprite.Group()
+
     borderGroup.add(border)
+    allSprites.add(player)
+
     screen.blit(gameSurface, (0, 0))
     allSprites.draw(screen)
     pg.display.flip()
-
-    i=0
-    allSprites.add(player)
 
     playerMoveX = 0
     playerMoveY = 0
     speed = 3
     fps_count = 0
+
+    # Main Loop
     while True:
         fps_count += 1
+        # Keyboard detection
         for event in pg.event.get():
             if event.type == QUIT:
                 return
@@ -257,18 +267,28 @@ def main():
                 elif event.key == K_s:
                     playerMoveY -= speed
 
+        # Update player the position of each object
         player.update((playerMoveX, playerMoveY))   
         borderGroup.update()
+        print(str(border.rect.x) + ", " + str(border.y))
 
+        # Create a new border if it is required, and remove old ones.
         if border.borderRequired == True:
             border = Border()
             borderGroup.add(border)
+
+            # border.drawLine(gameSurface)
             print("STATUS: Border Added.")
 
-        for border in borderGroup:
-            if border.rect.x < -50:
-                borderGroup.remove(border)
+            # Remove borders once they're past the edge of the screen
+            # to prevent excess RAM usage and lag.
+            for border in borderGroup:
+                if border.rect.x < 100:
+                    borderGroup.remove(border)
 
+        
+
+        # Display all changes
         screen.blit(gameSurface, (0, 0))
         borderGroup.draw(screen)
         allSprites.draw(screen)
