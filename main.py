@@ -34,7 +34,7 @@ oldY = 0
 # Dark Purple - #491d88
 # Light Black/Red - #331a38
 
-# Standardised Fuction For Loading In Images
+# Standardised Fuctions For Loading In Images and Sprites
 def load_image(name, colorkey=None):
     fullname = os.path.join(images_dir, name)
     try:
@@ -88,7 +88,7 @@ def load_sound(name):
 class Player(pg.sprite.Sprite):
 
     def __init__(self):
-        pg.sprite.Sprite.__init__(self)  # call Sprite intializer
+        pg.sprite.Sprite.__init__(self)  # Call Sprite intializer
         print("Loading Sprite")
         self.image = pg.transform.scale(load_sprite("square.png", -1), (50, 50))
         self.rect = self.image.get_rect()
@@ -96,12 +96,19 @@ class Player(pg.sprite.Sprite):
         self.area = screen.get_rect()
         self.rect.topleft = 10, 10
     def update(self, move):
-        self.rect.x += move[0]
-        self.rect.y += move[1]
 
-        # if self.rect.y < 660 or self.rect.y > 780:
-        #     print("Border Hit.")
+        # Border Detection
+        if self.rect.x + move[0] >= 1280 or self.rect.x + move[0] <= 0:
+            pass
+        else:
+            self.rect.x += move[0]
 
+        if self.rect.y + move[1] <= 0 or self.rect.y + move[1] >= 720:
+            pass
+        else:
+            self.rect.y += move[1]
+
+# Class Controlling the Borders
 class Border(pg.sprite.Sprite):
     global borderSpeed
     #global borderRequired
@@ -118,19 +125,30 @@ class Border(pg.sprite.Sprite):
         self.y = 340
         self.width = 40
         self.borderRequired = False
+        # self.passageGroup.add(self.passage)
+        self.pathwayImage = pg.transform.scale(load_sprite("border-passageway.png", None), (50, self.width))
+        self.pathRect = self.pathwayImage.get_rect()
+        self.pathRect.x = 1280
+        self.pathRect.y = 0
 
         print(self.rect)
 
-    def update(self):
+    def update(self, screen):
 
         # Note: This comment is resource heavy.
         #print("STATUS: Borders Updating.")
 
         oldY = self.y
 
+
         self.width = self.generateWidth()
         self.rect.x = self.rect.x - borderSpeed
         self.y =+ self.generateY()
+        self.pathRect.x = self.rect.x
+        self.pathRect.y = self.y
+
+        # Add the passageway somewhere here
+
 
         #print(self.rect.x)
         #print(borderRequired)
@@ -154,14 +172,16 @@ class Border(pg.sprite.Sprite):
         # else:
         #     y = int(oldY + random.randint(-1*oldY, oldY))
         #     print(y)
-        return 700
+        return 300
         
     def generateWidth(self):
         # return (720/random.randint(70, 140))
-        return 40
+        return 200
     # def drawLine(self, surface):
     #     pg.draw.line(surface, (0, 0, 0), (0, 660), (1280, 660))
     #     pg.draw.line(surface, (0, 0, 0), (0, 780), (1280, 780))
+
+# Class Controlling the Sounds
 class Sounds():
     def __init__(self):
         self.loadSounds()
@@ -170,6 +190,9 @@ class Sounds():
         self.deathSound = load_sound("death_sound.wav")
         self.timerSound = load_sound("timer_sound.wav")
         self.startSound = load_sound("start_sound.wav")
+        self.buttonSound = load_sound("button_sound.wav")
+        self.gameMusicSound = load_sound("gameMusic_sound.wav")
+        self.menuMusicSound = load_sound("menuMusic_sound.wav")
 
 # Loads Images With Transparency
 def blit_alpha(target, source, location, opacity):
@@ -218,9 +241,8 @@ def main():
         mainMenu(mainMenuSurface, screen, clock, instructionMenuSurface)
     configMenu(configMenuSurface, screen, clock)
 
-    print("\nGAME STATUS: Running\n")
+    print("\nGAME STATUS: Running.\n")
     drawGame(gameSurface, screen, clock)
-    
     
     #sounds = Sounds()
     player = Player()
@@ -233,7 +255,6 @@ def main():
     allSprites.add(player)
 
     screen.blit(gameSurface, (0, 0))
-    allSprites.draw(screen)
     pg.display.flip()
 
     playerMoveX = 0
@@ -268,16 +289,19 @@ def main():
                     playerMoveY -= speed
 
         # Update player the position of each object
-        player.update((playerMoveX, playerMoveY))   
-        borderGroup.update()
-        print(str(border.rect.x) + ", " + str(border.y))
+        player.update((playerMoveX, playerMoveY))  
+        
+        # Border collision detection and update passageway
+        for border in borderGroup:
+            if player.rect.colliderect(border):
+                if player.rect.y < border.y or player.rect.y > (border.y + border.width):
+                    print("STATUS: Border Collision.")
+        borderGroup.update(screen)
 
         # Create a new border if it is required, and remove old ones.
         if border.borderRequired == True:
             border = Border()
             borderGroup.add(border)
-
-            # border.drawLine(gameSurface)
             print("STATUS: Border Added.")
 
             # Remove borders once they're past the edge of the screen
@@ -285,6 +309,7 @@ def main():
             for border in borderGroup:
                 if border.rect.x < 100:
                     borderGroup.remove(border)
+                    print("STATUS: Border Removed.")
 
         
 
@@ -295,7 +320,7 @@ def main():
         pg.display.flip()
         pg.time.Clock().tick(220)
     
-
+# Gets the time - for scoring purposes later.
 def getPerfTime():
     return time.perf_counter()
 
@@ -382,7 +407,7 @@ def configMenu(configMenuSurface, screen, clock):
                 if mousePos[0] >= startpos.topleft[0] and mousePos[0] <= startpos.bottomright[0] and mousePos[1] <= startpos.bottomright[1] and mousePos[1] >= startpos.topleft[1]:
                     menuGoing = False
                     print("CONTROL: Config Start")
-    
+
 # Instruction Menu Function
 def instructionMenu(instructionMenuSurface, screen, clock):
 
@@ -422,11 +447,14 @@ def instructionMenu(instructionMenuSurface, screen, clock):
                     menuGoing = False
                     print("CONTROL: Back")
 
+# This sub draws the game initially
 def drawGame(gameSurface, screen, clock):
+    
     # Fill white to stop bolding - clear screen
     gameSurface.fill((250, 250, 250))
     screen.blit(gameSurface, (0, 0))
     pg.display.flip()
+
 # Startup Function to Ensure Modules Are Loaded
 def startupChecks():
     if not pg.font:
