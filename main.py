@@ -5,6 +5,7 @@ import time
 from pygame.locals import *
 from pygame.compat import geterror
 import random
+from multiprocessing import Process
 
 main_dir = os.path.split(os.path.abspath(__file__))[0]
 assets_dir = os.path.join(main_dir, "Assets")
@@ -180,6 +181,18 @@ class Border(pg.sprite.Sprite):
     # def drawLine(self, surface):
     #     pg.draw.line(surface, (0, 0, 0), (0, 660), (1280, 660))
     #     pg.draw.line(surface, (0, 0, 0), (0, 780), (1280, 780))
+class Path(pg.sprite.Sprite):
+    def __init__(self, borderY, pathGradient, pathWidth, pathImage):
+        pg.sprite.Sprite.__init__(self)
+        self.y = self.getY(borderY, pathGradient, pathWidth, pathImage)
+        self.width = 40
+
+    def getY(self, borderY, pathGradient, pathWidth, pathImage):
+        generateImageProcess = Process(target=genImgProcess, args=(borderY, pathGradient, pathWidth, pathImage))
+        generateImageProcess.start()
+
+def genImgProcess(q, w, e, r):
+    print("Process Finished: "+ str(q), str(w), str(e), str(r))
 
 # Class Controlling the Sounds
 class Sounds():
@@ -247,13 +260,15 @@ def main():
     #sounds = Sounds()
     player = Player()
     border = Border()
+    path = Path(borderY=border.y, pathGradient=0, pathWidth=0, pathImage=0)
 
     allSprites = pg.sprite.RenderPlain((player))
     borderGroup = pg.sprite.Group()
+    pathGroup = pg.sprite.Group()
 
     borderGroup.add(border)
     allSprites.add(player)
-
+    pathGroup.add(path)
     screen.blit(gameSurface, (0, 0))
     pg.display.flip()
 
@@ -296,12 +311,17 @@ def main():
             if player.rect.colliderect(border):
                 if player.rect.y < border.y or player.rect.y > (border.y + border.width):
                     print("STATUS: Border Collision.")
+
         borderGroup.update(screen)
+        pathGroup.update(screen)
 
         # Create a new border if it is required, and remove old ones.
         if border.borderRequired == True:
+            path = Path(borderY=border.y, pathGradient=0, pathWidth=0, pathImage=0)
             border = Border()
+
             borderGroup.add(border)
+            pathGroup.add(path)
             print("STATUS: Border Added.")
 
             # Remove borders once they're past the edge of the screen
@@ -310,12 +330,22 @@ def main():
                 if border.rect.x < 100:
                     borderGroup.remove(border)
                     print("STATUS: Border Removed.")
+            
+            
+            for path in pathGroup:
+                if path.rect.x < 100:
+                    pathGroup.remove(path)
+                    print("STATUS: Path Removed.")
 
         
 
         # Display all changes
         screen.blit(gameSurface, (0, 0))
         borderGroup.draw(screen)
+
+        # Reenable this line once the auto-image generation is created.
+        #pathGroup.draw(screen)
+
         allSprites.draw(screen)
         pg.display.flip()
         pg.time.Clock().tick(220)
@@ -464,4 +494,5 @@ def startupChecks():
 if __name__ == "__main__":
     pg.init()
     startupChecks()
+    
     main()
