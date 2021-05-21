@@ -6,12 +6,14 @@ from pygame.locals import *
 from pygame.compat import geterror
 import random
 from multiprocessing import Process
+from PIL import Image
 
 main_dir = os.path.split(os.path.abspath(__file__))[0]
 assets_dir = os.path.join(main_dir, "Assets")
 sounds_dir = os.path.join(assets_dir, "Sounds")
 images_dir = os.path.join(assets_dir, "Images")
 sprites_dir = os.path.join(images_dir, "Sprites")
+test_dir = os.path.join(images_dir, "pathGenTesting")
 
 print("\nConcentrate: A Game By Abram Liddell")
 print("\nDIRECTORIES:")
@@ -19,7 +21,9 @@ print("     " + main_dir)
 print("     " + assets_dir)
 print("     " + sounds_dir)
 print("     " + images_dir)
-print("     " + sprites_dir + "\n")
+print("     " + sprites_dir)
+print("     " + test_dir + "\n")
+
 
 global gameStarted
 global borderSpeed
@@ -192,6 +196,10 @@ class Path(pg.sprite.Sprite):
         generateImageProcess.start()
 
 def genImgProcess(q, w, e, r):
+
+    with Image.open(sprites_dir + r"\basePath.png") as im:
+        im.rotate(45).show()
+        im.save(test_dir + r"\generated45.png", format="PNG")
     print("Process Finished: "+ str(q), str(w), str(e), str(r))
 
 # Class Controlling the Sounds
