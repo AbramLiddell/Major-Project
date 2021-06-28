@@ -1,11 +1,12 @@
 import os
 import pygame as pg
 import sys
+import io
 import time
 from pygame.locals import *
 from pygame.compat import geterror
 import random
-from multiprocessing import Process
+from multiprocessing import Process, Queue
 from PIL import Image
 
 main_dir = os.path.split(os.path.abspath(__file__))[0]
@@ -27,6 +28,7 @@ print("     " + test_dir + "\n")
 
 global gameStarted
 global borderSpeed
+global baseImage
 borderSpeed = 1
 gameStarted = False
 oldY = 0
@@ -130,17 +132,12 @@ class Border(pg.sprite.Sprite):
         self.y = 340
         self.width = 40
         self.borderRequired = False
-        # self.passageGroup.add(self.passage)
-        self.pathwayImage = pg.transform.scale(load_sprite("border-passageway.png", None), (50, self.width))
-        self.pathRect = self.pathwayImage.get_rect()
-        self.pathRect.x = 1280
-        self.pathRect.y = 0
 
         print(self.rect)
 
     def update(self, screen):
 
-        # Note: This comment is resource heavy.
+        # Note: This print statement is resource heavy.
         #print("STATUS: Borders Updating.")
 
         oldY = self.y
@@ -149,8 +146,6 @@ class Border(pg.sprite.Sprite):
         self.width = self.generateWidth()
         self.rect.x = self.rect.x - borderSpeed
         self.y =+ self.generateY()
-        self.pathRect.x = self.rect.x
-        self.pathRect.y = self.y
 
         # Add the passageway somewhere here
 
@@ -186,21 +181,98 @@ class Border(pg.sprite.Sprite):
     #     pg.draw.line(surface, (0, 0, 0), (0, 660), (1280, 660))
     #     pg.draw.line(surface, (0, 0, 0), (0, 780), (1280, 780))
 class Path(pg.sprite.Sprite):
-    def __init__(self, borderY, pathGradient, pathWidth, pathImage):
+    def __init__(self, pathGradient, pathWidth, pathImage):
         pg.sprite.Sprite.__init__(self)
-        self.y = self.getY(borderY, pathGradient, pathWidth, pathImage)
-        self.width = 40
+        self.angle = self.getAngle()
+        self.width = 80
+        self.image = self.loadPath()
+        self.rect = self.image.get_rect()
+        
+        # Somehow use a global variable for the image
 
-    def getY(self, borderY, pathGradient, pathWidth, pathImage):
-        generateImageProcess = Process(target=genImgProcess, args=(borderY, pathGradient, pathWidth, pathImage))
+    
+            
+    def getAngle(self):
+        return 30
+
+    def loadPath(self):
+        image = Queue()
+        generateImageProcess = Process(target=genImgProcess, args=(self.angle, self.width, image, baseImage))
         generateImageProcess.start()
+        image = image.get()
+        generateImageProcess.join()
+        return image
+        
 
-def genImgProcess(q, w, e, r):
+def genImgProcess(angle, width, image, baseImage):
+    im = baseImage.rotate(angle, expand=True)
+    print('\nImage Rotated.')
 
-    with Image.open(sprites_dir + r"\basePath.png") as im:
-        im.rotate(45).show()
-        im.save(test_dir + r"\generated45.png", format="PNG")
-    print("Process Finished: "+ str(q), str(w), str(e), str(r))
+    flip = False
+    if angle < 0:
+        print('Path angle inverted.')
+        flip = True
+        angle = angle * -1
+
+    imageWidth = im.width
+    imageHeight = im.height
+    pathWidth = width
+    i = 0
+    height = -2
+
+    rgb_im = im.convert('RGBa')
+    print('Image Converted to RGBa.')
+
+    print('\nFinding black pixels on last line...')
+    print('Pixels found:')
+
+    # This one removes the edge on the bottom line
+    for x in range(imageWidth):
+        r, g, b, a = rgb_im.getpixel((x, imageHeight-2))
+        if a > 20:
+            i = i + 1
+            print(str(i) + ": " + str(r), str(g), str(b), str(a), str(x))
+            left = x
+            break
+
+    # This crop is to remove the left side of the image.
+    im = im.crop([left, 0, pathWidth + left, imageHeight])
+    rgb_im = im.convert('RGBa')
+    newWidth = im.width
+    i = 0
+
+
+    # Increment this counter every time you edit this function.
+    # Time wasted on this for loop: 4hr 15min
+    # This one removes the right column
+
+    print('\nFinding pixels on right column...')
+    print('Pixels found:')
+    for y in range(imageHeight):
+        r, g, b, a = rgb_im.getpixel((newWidth - 1, y))
+        if a > 20:
+            i = i + 1
+            print(str(i) + ": " + str(r), str(g), str(b), str(a), str(y))
+            height = y
+            break
+
+    print('\nCropping...')
+    im = im.crop([0, height, newWidth, imageHeight])
+
+    if flip == True:
+        height = imageHeight
+        print('\nTransposing for negative gradient...')
+
+        im = im.transpose(Image.FLIP_TOP_BOTTOM)
+    
+    im.show()
+    image.put(im)
+    
+
+def loadBaseImg():
+    global baseImage
+    print('Loading in base image for path...')
+    baseImage = Image.open(sprites_dir + r"\basePath.png")
 
 # Class Controlling the Sounds
 class Sounds():
@@ -268,7 +340,7 @@ def main():
     #sounds = Sounds()
     player = Player()
     border = Border()
-    path = Path(borderY=border.y, pathGradient=0, pathWidth=0, pathImage=0)
+    path = Path(pathGradient=0, pathWidth=0, pathImage=0)
 
     allSprites = pg.sprite.RenderPlain((player))
     borderGroup = pg.sprite.Group()
@@ -325,7 +397,7 @@ def main():
 
         # Create a new border if it is required, and remove old ones.
         if border.borderRequired == True:
-            path = Path(borderY=border.y, pathGradient=0, pathWidth=0, pathImage=0)
+            path = Path(pathGradient=0, pathWidth=0, pathImage=0)
             border = Border()
 
             borderGroup.add(border)
@@ -502,5 +574,5 @@ def startupChecks():
 if __name__ == "__main__":
     pg.init()
     startupChecks()
-    
+    loadBaseImg()
     main()

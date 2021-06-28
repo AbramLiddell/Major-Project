@@ -18,16 +18,20 @@ dir = r"c:\Users\abram\Documents\IT\Major Project\Assets\Images\Sprites"
 name = r"\generated45cropped.png"
 angle = 23
 
+
+
+
 flip = False
 if angle < 0:
     print('Path angle inverted.')
     flip = True
     angle = angle * -1
 
-with Image.open(dir + r"\basePath.png") as im:
-        im = im.rotate(angle, expand=True)
-        print('\nImage Rotated.')
+with Image.open(dir + r"\basePath.png") as baseImage:
+    baseImage = baseImage.rotate(angle, expand=True)
+    print('\nImage Rotated.')
 
+im = baseImage
 
 imageWidth = im.width
 imageHeight = im.height
